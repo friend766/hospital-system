@@ -1,0 +1,281 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useTheme } from "@/context/ThemeContext";
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    role: "patient",
+    specialization: "General Practice",
+    department: "Outpatient Department",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const roles = [
+    { id: "patient", label: "Patient", icon: "❤️", desc: "Book appointments & view history" },
+    { id: "doctor", label: "Doctor", icon: "🩺", desc: "Consultations & clinical records" },
+    { id: "receptionist", label: "Receptionist", icon: "🛎️", desc: "Front desk & patient registration" },
+    { id: "pharmacist", label: "Pharmacist", icon: "💊", desc: "Inventory & medicine dispensing" },
+    { id: "admin", label: "Admin", icon: "👑", desc: "Full hospital management" },
+  ];
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      // Auto login after successful registration
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (loginRes.ok) {
+        const loginData = await loginRes.json();
+        const role = loginData.user?.role;
+        if (role === "admin") router.push("/admin/dashboard");
+        else if (role === "doctor") router.push("/doctor/dashboard");
+        else if (role === "receptionist") router.push("/receptionist/dashboard");
+        else if (role === "pharmacist") router.push("/pharmacist/dashboard");
+        else router.push("/patient/dashboard");
+      } else {
+        router.push("/login");
+      }
+
+      router.refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-center relative overflow-hidden transition-colors duration-300 py-8">
+      {/* Background Medical Pattern Overlay */}
+      <div className="absolute inset-0 opacity-15 dark:opacity-20 bg-[url('/medical-bg.jpg')] bg-repeat bg-[length:650px_auto] pointer-events-none" />
+
+      {/* Top Bar Controls */}
+      <div className="absolute top-6 right-6 z-20 flex items-center space-x-3">
+        <button
+          onClick={toggleTheme}
+          className="p-2 px-3.5 rounded-btn bg-white dark:bg-[#1E293B] border border-border dark:border-[#334155] text-xs font-bold text-navy dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm flex items-center gap-2"
+        >
+          {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+        </button>
+      </div>
+
+      <div className="max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
+        <div className="bg-white dark:bg-[#1E293B] border border-border dark:border-[#334155] rounded-2xl shadow-xl overflow-hidden p-6 sm:p-10 space-y-6">
+          
+          <div>
+            <div className="flex items-center space-x-3 mb-2">
+              <div className="w-9 h-9 bg-primary text-white rounded-xl flex items-center justify-center font-black text-lg shadow-sm">
+                H
+              </div>
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">Hospital HMS Registration</span>
+            </div>
+            <h1 className="text-2xl font-black text-navy dark:text-white tracking-tight">
+              Create New System Account ✨
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+              Select your role and fill in your registration details
+            </p>
+          </div>
+
+          {error && (
+            <div className="p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-danger dark:text-red-300 text-xs font-bold rounded-btn flex items-center gap-2">
+              <span>⚠️</span> {error}
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Interactive Role Selector Cards */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-navy dark:text-slate-200">
+                Choose Account Role *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                {roles.map((r) => {
+                  const isSelected = formData.role === r.id;
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, role: r.id })}
+                      className={`p-3 rounded-card text-left transition border ${
+                        isSelected
+                          ? "bg-primary text-white border-primary shadow-md ring-2 ring-blue-400/40"
+                          : "bg-slate-50 dark:bg-[#0F172A] border-border dark:border-[#334155] text-navy dark:text-slate-200 hover:border-primary"
+                      }`}
+                    >
+                      <div className="text-xl mb-1">{r.icon}</div>
+                      <div className="font-bold text-xs">{r.label}</div>
+                      <div className={`text-[10px] line-clamp-1 mt-0.5 ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
+                        {r.desc}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Input Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="e.g. Dr. Sarah Ahmed"
+                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@example.com"
+                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+92 300 1234567"
+                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-bold text-navy dark:text-slate-200">
+                    Password *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-[11px] font-semibold text-primary hover:underline"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  required
+                  minLength={6}
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {formData.role === "doctor" && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                      Specialization
+                    </label>
+                    <input
+                      type="text"
+                      name="specialization"
+                      value={formData.specialization}
+                      onChange={handleChange}
+                      placeholder="e.g. Cardiology"
+                      className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      placeholder="e.g. Outpatient Cardiology"
+                      className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 rounded-btn text-xs font-bold text-white bg-primary hover:bg-blue-700 disabled:opacity-50 transition shadow-md"
+            >
+              {loading ? "Creating Account..." : "Create Account & Sign In →"}
+            </button>
+          </form>
+
+          <div className="text-center text-xs text-slate-500 dark:text-slate-400 font-medium pt-2">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-bold text-primary hover:underline"
+            >
+              Sign In Here
+            </Link>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
