@@ -6,7 +6,11 @@ const DoctorSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
+    },
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
     },
     specialization: {
       type: String,
@@ -20,11 +24,11 @@ const DoctorSchema = new mongoose.Schema(
     },
     availability: {
       days: {
-        type: [String], // e.g. ["Monday", "Wednesday", "Friday"]
+        type: [String],
         default: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
       },
       timeSlots: {
-        type: [String], // e.g. ["09:00 AM - 01:00 PM", "02:00 PM - 05:00 PM"]
+        type: [String],
         default: ["09:00 AM - 01:00 PM", "02:00 PM - 05:00 PM"],
       },
     },

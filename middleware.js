@@ -26,6 +26,7 @@ export function middleware(req) {
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/register-hospital" ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/test-db") ||
     pathname.startsWith("/_next") ||
@@ -50,17 +51,19 @@ export function middleware(req) {
 
   const userRole = decoded.role;
 
-  // Strict role check for dashboard homepages
-  if (pathname.startsWith("/admin") && userRole !== "admin") {
+  // Super-Admin route guard
+  if (pathname.startsWith("/super-admin") && userRole !== "superadmin") {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // Dashboard role routing guards
+  if (pathname.startsWith("/admin") && userRole !== "admin" && userRole !== "superadmin") {
     return NextResponse.redirect(new URL(`/${userRole}/dashboard`, req.url));
   }
-  if (pathname.startsWith("/doctor") && userRole !== "doctor" && userRole !== "admin") {
+  if (pathname.startsWith("/doctor") && userRole !== "doctor" && userRole !== "admin" && userRole !== "superadmin") {
     return NextResponse.redirect(new URL(`/${userRole}/dashboard`, req.url));
   }
-  if (pathname.startsWith("/receptionist") && userRole !== "receptionist" && userRole !== "admin") {
-    return NextResponse.redirect(new URL(`/${userRole}/dashboard`, req.url));
-  }
-  if (pathname.startsWith("/patient") && userRole !== "patient" && userRole !== "admin" && userRole !== "doctor" && userRole !== "receptionist") {
+  if (pathname.startsWith("/receptionist") && userRole !== "receptionist" && userRole !== "admin" && userRole !== "superadmin") {
     return NextResponse.redirect(new URL(`/${userRole}/dashboard`, req.url));
   }
 

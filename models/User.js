@@ -21,9 +21,15 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "doctor", "receptionist", "pharmacist", "patient"],
+      enum: ["superadmin", "admin", "doctor", "receptionist", "pharmacist", "patient"],
       default: "patient",
       required: true,
+    },
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+      index: true,
     },
     phone: {
       type: String,
@@ -34,7 +40,6 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    // TODO (teammate): add pharmacy/pharmacist specific fields here if needed in the future
   },
   { timestamps: true }
 );

@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const AppointmentSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
@@ -13,11 +18,11 @@ const AppointmentSchema = new mongoose.Schema(
       required: true,
     },
     date: {
-      type: String, // e.g. "2026-08-20"
+      type: String,
       required: [true, "Appointment date is required"],
     },
     time: {
-      type: String, // e.g. "10:00 AM"
+      type: String,
       required: [true, "Appointment time is required"],
     },
     status: {

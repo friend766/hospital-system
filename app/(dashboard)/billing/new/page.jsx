@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
-export default function NewInvoicePage() {
+function NewInvoiceContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlPrescriptionId = searchParams.get("prescriptionId");
+  const urlPatientId = searchParams.get("patientId");
+
   const [currentUser, setCurrentUser] = useState(null);
   const [patients, setPatients] = useState([]);
   const [medicines, setMedicines] = useState([]);
@@ -14,7 +18,7 @@ export default function NewInvoicePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const [patientId, setPatientId] = useState("");
+  const [patientId, setPatientId] = useState(urlPatientId || "");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [items, setItems] = useState([]);
 
@@ -35,20 +39,55 @@ export default function NewInvoicePage() {
       const patientsData = await patientsRes.json();
       const medData = await medRes.json();
 
+      let isPharm = false;
       if (profileRes.ok && profileData.user) {
         setCurrentUser(profileData.user);
-        if (profileData.user.role === "pharmacist") {
-          setItems([
-            { description: "Pharmacy Dispensing Fee", quantity: 1, amount: 10 },
-          ]);
-        } else {
-          setItems([
-            { description: "Doctor Consultation Fee", quantity: 1, amount: 50 },
-          ]);
+        isPharm = profileData.user.role === "pharmacist";
+      }
+
+      if (patientsRes.ok) setPatients(patientsData.patients || []);
+      const allMeds = medData.medicines || [];
+      if (medRes.ok) setMedicines(allMeds);
+
+      // Check if arriving from a Prescription Dispense action!
+      if (urlPrescriptionId) {
+        const presRes = await fetch(`/api/prescriptions/${urlPrescriptionId}`);
+        const presData = await presRes.json();
+
+        if (presRes.ok && presData.prescription) {
+          const pres = presData.prescription;
+          if (pres.patientId?._id) {
+            setPatientId(pres.patientId._id);
+          }
+
+          // Build line items from prescribed medicines
+          const autoItems = pres.medicines.map((item) => {
+            const matchedMed = allMeds.find((m) => m.name.toLowerCase() === item.medicineName.toLowerCase());
+            return {
+              description: `${item.medicineName} (${item.dosage || "Prescribed"})`,
+              quantity: item.quantity || 1,
+              amount: matchedMed?.price || 15.0,
+            };
+          });
+
+          // Always add Pharmacy Dispensing Fee
+          autoItems.push({
+            description: "Pharmacy Dispensing Fee",
+            quantity: 1,
+            amount: 10.0,
+          });
+
+          setItems(autoItems);
+          return;
         }
       }
-      if (patientsRes.ok) setPatients(patientsData.patients || []);
-      if (medRes.ok) setMedicines(medData.medicines || []);
+
+      // Default presets if no prescription ID
+      if (isPharm) {
+        setItems([{ description: "Pharmacy Dispensing Fee", quantity: 1, amount: 10 }]);
+      } else {
+        setItems([{ description: "Doctor Consultation Fee", quantity: 1, amount: 50 }]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -61,14 +100,12 @@ export default function NewInvoicePage() {
     const med = medicines.find((m) => m._id === selectedMedId);
     if (!med) return;
 
-    // Check if item already exists
     const existingIndex = items.findIndex((i) => i.description.startsWith(med.name));
     if (existingIndex > -1) {
       const updated = [...items];
       updated[existingIndex].quantity += 1;
       setItems(updated);
     } else {
-      // Insert medicine before Dispensing Fee if present
       const hasDispensingFee = items.some((i) => i.description === "Pharmacy Dispensing Fee");
       const newItem = {
         description: `${med.name} (${med.dosageForm || "Tablet"})`,
@@ -162,7 +199,9 @@ export default function NewInvoicePage() {
             </span>
           </div>
           <p className="text-sm text-slate-500">
-            {isPharmacist
+            {urlPrescriptionId
+              ? "✨ Prescribed medicines automatically loaded into invoice!"
+              : isPharmacist
               ? "Select medicines bought by patient and apply pharmacy dispensing fees"
               : "Bill doctor consultation fees, hospital registration, and lab diagnostics"}
           </p>
@@ -213,10 +252,10 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Pharmacist Medicine Item Picker */}
-          {isPharmacist ? (
+          {isPharmacist && (
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-btn space-y-3">
               <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
-                💊 Select Medicines Patient Is Purchasing:
+                💊 Add Additional Medicine to Bill:
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
@@ -237,36 +276,6 @@ export default function NewInvoicePage() {
                   className="px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-btn hover:bg-emerald-700 transition shadow-xs"
                 >
                   + Add Medicine to Bill
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Receptionist Quick Presets */
-            <div className="p-3 bg-slate-50 border border-border rounded-btn space-y-2">
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Quick Add Hospital Charges:
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddItem("Doctor Consultation Fee", 50)}
-                  className="px-3 py-1 bg-white border border-border text-xs font-semibold rounded-btn hover:bg-slate-100 text-slate-700 shadow-xs"
-                >
-                  + Consultation Fee ($50)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddItem("Hospital Registration Fee", 20)}
-                  className="px-3 py-1 bg-white border border-border text-xs font-semibold rounded-btn hover:bg-slate-100 text-slate-700 shadow-xs"
-                >
-                  + Registration ($20)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddItem("Lab Diagnostic Test", 45)}
-                  className="px-3 py-1 bg-white border border-border text-xs font-semibold rounded-btn hover:bg-slate-100 text-slate-700 shadow-xs"
-                >
-                  + Lab Test ($45)
                 </button>
               </div>
             </div>
@@ -362,5 +371,13 @@ export default function NewInvoicePage() {
         </form>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function NewInvoicePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading invoice form...</div>}>
+      <NewInvoiceContent />
+    </Suspense>
   );
 }

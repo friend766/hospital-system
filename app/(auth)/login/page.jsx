@@ -36,7 +36,8 @@ export default function LoginPage() {
       }
 
       const userRole = data.user?.role;
-      if (userRole === "admin") router.push("/admin/dashboard");
+      if (userRole === "superadmin") router.push("/super-admin");
+      else if (userRole === "admin") router.push("/admin/dashboard");
       else if (userRole === "doctor") router.push("/doctor/dashboard");
       else if (userRole === "receptionist") router.push("/receptionist/dashboard");
       else if (userRole === "pharmacist") router.push("/pharmacist/dashboard");
@@ -59,17 +60,20 @@ export default function LoginPage() {
       <header className="relative z-20 w-full px-4 lg:px-8 py-3 bg-white/80 dark:bg-[#1E293B]/80 backdrop-blur-md border-b border-border dark:border-[#334155] flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex items-center space-x-3 text-xs font-semibold">
           <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
-            🚨 24/7 Active
+            🌐 Multi-Tenant SaaS Platform
           </span>
           <span className="text-slate-600 dark:text-slate-300">
-            Emergency Outpatient & Pharmacy Dispensary Counters Open
+            Unified Healthcare, Pharmacy & Multi-Hospital SaaS Management
           </span>
         </div>
 
         <div className="flex items-center space-x-3">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden md:inline">
-            📞 Emergency: +1 (800) 555-0199
-          </span>
+          <Link
+            href="/register-hospital"
+            className="text-xs font-bold text-primary hover:underline px-3 py-1 bg-blue-50 dark:bg-blue-950/60 rounded-btn border border-blue-200 dark:border-blue-800"
+          >
+            + Register New Hospital Tenant
+          </Link>
           <button
             onClick={toggleTheme}
             className="p-1.5 px-3 rounded-btn bg-slate-100 dark:bg-slate-800 border border-border dark:border-[#334155] text-xs font-bold text-navy dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition shadow-xs flex items-center gap-1.5"
@@ -94,39 +98,39 @@ export default function LoginPage() {
                   H
                 </div>
                 <div>
-                  <h1 className="font-black text-xl text-white leading-none tracking-tight">Hospital HMS</h1>
-                  <span className="text-[11px] text-blue-300 font-bold uppercase tracking-wider">Healthcare & Pharmacy Portal</span>
+                  <h1 className="font-black text-xl text-white leading-none tracking-tight">Hospital SaaS</h1>
+                  <span className="text-[11px] text-blue-300 font-bold uppercase tracking-wider">Multi-Tenant Platform</span>
                 </div>
               </div>
 
               <div className="space-y-3 pt-2">
                 <h2 className="text-2xl font-extrabold text-white leading-tight">
-                  Integrated Hospital & Pharmacy System
+                  Multi-Tenant Healthcare Platform
                 </h2>
                 <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  Welcome to our unified medical management portal for doctors, pharmacists, receptionists, admins, and patients.
+                  Isolated hospital workspaces, doctor consultations, pharmacy stock control, and recurring billing.
                 </p>
               </div>
 
               {/* Key Platform Capabilities */}
               <div className="space-y-2.5 pt-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">System Features & Modules</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">System Capabilities</span>
                 <div className="space-y-2 text-xs font-semibold text-slate-200">
                   <div className="flex items-center space-x-2.5 p-2 rounded-lg bg-white/5 border border-white/10">
+                    <span className="text-purple-300 text-sm">🏢</span>
+                    <span>Multi-Hospital & Tenant Data Isolation</span>
+                  </div>
+                  <div className="flex items-center space-x-2.5 p-2 rounded-lg bg-white/5 border border-white/10">
                     <span className="text-teal-300 text-sm">🩺</span>
-                    <span>Doctor Consultation Schedule & Clinical Records</span>
+                    <span>Doctor Consultations & Clinical Records</span>
                   </div>
                   <div className="flex items-center space-x-2.5 p-2 rounded-lg bg-white/5 border border-white/10">
                     <span className="text-emerald-300 text-sm">💊</span>
                     <span>Pharmacy Inventory & Auto Stock Deduction</span>
                   </div>
                   <div className="flex items-center space-x-2.5 p-2 rounded-lg bg-white/5 border border-white/10">
-                    <span className="text-purple-300 text-sm">🧾</span>
-                    <span>Automated Invoicing & PDF Receipts</span>
-                  </div>
-                  <div className="flex items-center space-x-2.5 p-2 rounded-lg bg-white/5 border border-white/10">
-                    <span className="text-sky-300 text-sm">❤️</span>
-                    <span>Patient Medical History & Prescription Access</span>
+                    <span className="text-sky-300 text-sm">💳</span>
+                    <span>Stripe Recurring Subscription Billing</span>
                   </div>
                 </div>
               </div>
@@ -138,8 +142,8 @@ export default function LoginPage() {
                   <div className="text-[10px] text-slate-400 font-semibold">Medicines</div>
                 </div>
                 <div className="border-x border-slate-700">
-                  <div className="text-base font-black text-blue-400">5</div>
-                  <div className="text-[10px] text-slate-400 font-semibold">Role Portals</div>
+                  <div className="text-base font-black text-blue-400">SaaS</div>
+                  <div className="text-[10px] text-slate-400 font-semibold">Multi-Tenant</div>
                 </div>
                 <div>
                   <div className="text-base font-black text-purple-400">24/7</div>
@@ -156,14 +160,14 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Right Login Form & Portal Guide */}
+          {/* Right Login Form */}
           <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between space-y-6">
             <div>
               <h2 className="text-2xl font-black text-navy dark:text-white tracking-tight">
                 Portal Sign In 👋
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                Enter your registered credentials below to access your role dashboard
+                Enter your registered credentials to access your tenant workspace
               </p>
             </div>
 
@@ -184,7 +188,7 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="e.g. doctor@hospital.com"
+                  placeholder="e.g. doctor@hospital.com or superadmin@saas.com"
                   className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -218,30 +222,29 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full py-3 px-4 rounded-btn text-xs font-bold text-white bg-primary hover:bg-blue-700 disabled:opacity-50 transition shadow-md"
               >
-                {loading ? "Signing in..." : "Sign In to Portal →"}
+                {loading ? "Signing in..." : "Sign In to Tenant Portal →"}
               </button>
             </form>
 
-            {/* Role Access Portal Guide Box */}
             <div className="p-3.5 bg-slate-50 dark:bg-[#0F172A] border border-border dark:border-[#334155] rounded-btn space-y-2">
               <div className="text-[10px] font-extrabold text-slate-400 dark:text-slate-400 uppercase tracking-widest">
-                💡 Role Access Guide:
+                💡 Hospital Tenant Registration:
               </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
-                <div>🩺 <strong>Doctors:</strong> View patients & clinical notes</div>
-                <div>💊 <strong>Pharmacist:</strong> Medicine stock & dispensing</div>
-                <div>🛎️ <strong>Receptionist:</strong> Patient registry & appointments</div>
-                <div>👑 <strong>Admin:</strong> System settings & doctor accounts</div>
+              <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Want to register a new clinic or hospital?{" "}
+                <Link href="/register-hospital" className="font-bold text-primary hover:underline">
+                  Create Hospital Tenant Account →
+                </Link>
               </div>
             </div>
 
             <div className="text-center text-xs text-slate-500 dark:text-slate-400 font-medium pt-2">
-              Need a new account?{" "}
+              Staff / Patient Account?{" "}
               <Link
                 href="/register"
                 className="font-bold text-primary hover:underline"
               >
-                Register Account Here
+                Register Here
               </Link>
             </div>
           </div>
@@ -249,9 +252,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Footer Info Bar */}
       <footer className="relative z-20 w-full px-4 py-3 bg-white/80 dark:bg-[#1E293B]/80 border-t border-border dark:border-[#334155] text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
-        <span>© 2026 Hospital & Pharmacy Management System • Outpatient Hours: 8:00 AM - 8:00 PM • Emergency: 24/7</span>
+        <span>© 2026 Multi-Tenant Hospital SaaS • Powered by Next.js App Router & MongoDB Atlas</span>
       </footer>
     </div>
   );

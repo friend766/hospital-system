@@ -15,6 +15,11 @@ const PrescriptionItemSchema = new mongoose.Schema({
 
 const PrescriptionSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",

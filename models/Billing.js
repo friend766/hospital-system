@@ -8,6 +8,11 @@ const InvoiceItemSchema = new mongoose.Schema({
 
 const BillingSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
@@ -26,7 +31,6 @@ const BillingSchema = new mongoose.Schema(
     invoiceNumber: {
       type: String,
       required: true,
-      unique: true,
     },
     items: [InvoiceItemSchema],
     totalAmount: {

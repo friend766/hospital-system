@@ -1,5 +1,6 @@
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
+import Organization from "@/models/Organization";
 import { comparePassword, signToken } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
@@ -32,11 +33,19 @@ export async function POST(req) {
       );
     }
 
+    let orgName = "";
+    if (user.organizationId) {
+      const org = await Organization.findById(user.organizationId);
+      if (org) orgName = org.name;
+    }
+
     const tokenPayload = {
       userId: user._id.toString(),
       name: user.name,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId ? user.organizationId.toString() : null,
+      organizationName: orgName,
     };
 
     const token = signToken(tokenPayload);
@@ -46,7 +55,6 @@ export async function POST(req) {
       user: tokenPayload,
     });
 
-    // Issue HTTP-only cookie
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

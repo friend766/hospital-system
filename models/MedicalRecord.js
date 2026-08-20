@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const MedicalRecordSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
@@ -33,7 +38,6 @@ const MedicalRecordSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    // TODO (teammate): attach Prescription reference/ID or "Create Prescription" button payload here
   },
   { timestamps: true }
 );

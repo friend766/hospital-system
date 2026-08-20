@@ -61,6 +61,8 @@ export default function PrescriptionDetailPage({ params }) {
 
       if (res.ok) {
         setPrescription(data.prescription);
+        // Automatically redirect to billing page pre-filled with prescribed medicines!
+        router.push(`/billing/new?prescriptionId=${id}&patientId=${prescription.patientId?._id}`);
       } else {
         throw new Error(data.error || "Failed to dispense prescription");
       }
@@ -184,15 +186,24 @@ export default function PrescriptionDetailPage({ params }) {
           )}
 
           {/* Pharmacist Dispense Action Button */}
-          {isPharmacist && prescription.status !== "dispensed" && (
-            <div className="pt-4 border-t border-border flex justify-end">
-              <button
-                onClick={handleDispense}
-                disabled={dispensing}
-                className="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-btn hover:bg-emerald-700 disabled:opacity-50 transition shadow-xs"
-              >
-                {dispensing ? "Dispensing..." : "✓ Dispense Medicines & Deduct Stock"}
-              </button>
+          {isPharmacist && (
+            <div className="pt-4 border-t border-border flex justify-between items-center">
+              {prescription.status === "dispensed" ? (
+                <Link
+                  href={`/billing/new?prescriptionId=${id}&patientId=${prescription.patientId?._id}`}
+                  className="px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-btn hover:bg-blue-700 transition shadow-xs"
+                >
+                  🧾 Generate Invoice for this Prescription →
+                </Link>
+              ) : (
+                <button
+                  onClick={handleDispense}
+                  disabled={dispensing}
+                  className="px-6 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-btn hover:bg-emerald-700 disabled:opacity-50 transition shadow-xs flex items-center gap-2"
+                >
+                  {dispensing ? "Dispensing..." : "✓ Dispense Medicines & Generate Invoice →"}
+                </button>
+              )}
             </div>
           )}
         </div>

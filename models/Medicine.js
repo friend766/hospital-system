@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const MedicineSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
     name: {
       type: String,
       required: [true, "Medicine name is required"],
@@ -14,7 +19,7 @@ const MedicineSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      required: [true, "Category is required"], // e.g. Antibiotics, Painkillers, Vitamins, Cardiovascular
+      required: [true, "Category is required"],
       trim: true,
     },
     price: {
@@ -34,7 +39,7 @@ const MedicineSchema = new mongoose.Schema(
     },
     dosageForm: {
       type: String,
-      default: "Tablet", // Tablet, Capsule, Syrup, Injection, Ointment
+      default: "Tablet",
       trim: true,
     },
     expiryDate: {
