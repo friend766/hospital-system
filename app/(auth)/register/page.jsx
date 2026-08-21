@@ -24,15 +24,25 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/organizations")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.organizations && data.organizations.length > 0) {
-          setOrganizations(data.organizations);
-          setFormData((prev) => ({ ...prev, organizationId: data.organizations[0]._id }));
+    async function fetchOrgs() {
+      try {
+        const res = await fetch("/api/organizations");
+        const contentType = res.headers.get("content-type");
+        if (res.ok && contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (data.organizations && data.organizations.length > 0) {
+            setOrganizations(data.organizations);
+            setFormData((prev) => ({
+              ...prev,
+              organizationId: prev.organizationId || data.organizations[0]._id,
+            }));
+          }
         }
-      })
-      .catch((err) => console.error("Error fetching organizations:", err));
+      } catch (err) {
+        console.error("Failed to fetch organizations:", err);
+      }
+    }
+    fetchOrgs();
   }, []);
 
   const roles = [
@@ -59,10 +69,14 @@ export default function RegisterPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Registration failed");
+        throw new Error(data.error || "Registration failed. Please try again.");
       }
 
       // Auto login after successful registration
@@ -147,11 +161,15 @@ export default function RegisterPage() {
                 required
                 className="w-full px-3.5 py-2.5 border border-blue-300 dark:border-blue-700 rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                {organizations.map((org) => (
-                  <option key={org._id} value={org._id}>
-                    🏥 {org.name} ({org.plan.toUpperCase()} Plan)
-                  </option>
-                ))}
+                {organizations.length > 0 ? (
+                  organizations.map((org) => (
+                    <option key={org._id} value={org._id}>
+                      🏥 {org.name} ({org.plan.toUpperCase()} Plan)
+                    </option>
+                  ))
+                ) : (
+                  <option value="">🏥 Central City Hospital (Default)</option>
+                )}
               </select>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Your account will be securely isolated under your selected hospital workspace.
@@ -295,7 +313,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 rounded-btn text-xs font-bold text-white bg-primary hover:bg-blue-700 disabled:opacity-50 transition shadow-md"
+              className="w-full py-3 px-4 rounded-btn text-xs font-bold text-white bg-primary hover:bg-blue-700 disabled:opacity-50 transition shadow-md cursor-pointer"
             >
               {loading ? "Creating Account..." : "Create Account & Sign In →"}
             </button>

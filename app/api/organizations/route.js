@@ -10,8 +10,8 @@ export async function GET() {
       .sort({ name: 1 })
       .lean();
 
-    return NextResponse.json({ organizations });
+    return NextResponse.json({ organizations: organizations || [] });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ organizations: [], error: error.message }, { status: 500 });
   }
 }
