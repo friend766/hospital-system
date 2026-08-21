@@ -177,18 +177,19 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
               <div>
                 <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
-                  Registered Email Address *
+                  E-mail Address *
                 </label>
                 <input
                   type="email"
                   name="email"
                   required
+                  autoComplete="off"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="e.g. doctor@hospital.com or superadmin@saas.com"
+                  placeholder="E-mail"
                   className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -196,7 +197,7 @@ export default function LoginPage() {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="block text-xs font-bold text-navy dark:text-slate-200">
-                    Account Password *
+                    Password *
                   </label>
                   <button
                     type="button"
@@ -210,9 +211,10 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   required
+                  autoComplete="off"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="••••••••"
+                  placeholder="Password"
                   className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
