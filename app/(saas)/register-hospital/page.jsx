@@ -28,11 +28,18 @@ export default function RegisterHospitalPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "hospitalName" && !formData.slug) {
+    const realName =
+      name === "org_admin_email_input"
+        ? "adminEmail"
+        : name === "org_admin_password_input"
+        ? "password"
+        : name;
+
+    if (realName === "hospitalName" && !formData.slug) {
       const autoSlug = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       setFormData({ ...formData, hospitalName: value, slug: autoSlug });
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData({ ...formData, [realName]: value });
     }
   };
 
@@ -102,7 +109,11 @@ export default function RegisterHospitalPage() {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+            {/* Dummy hidden inputs to block browser password manager auto-fill */}
+            <input type="text" name="fake_user" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+            <input type="password" name="fake_pass" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+
             {/* Interactive Subscription Plan Cards */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-navy dark:text-slate-200">
@@ -191,11 +202,12 @@ export default function RegisterHospitalPage() {
                 </label>
                 <input
                   type="email"
-                  name="adminEmail"
+                  name="org_admin_email_input"
                   required
+                  autoComplete="new-password"
                   value={formData.adminEmail}
                   onChange={handleChange}
-                  placeholder="admin@hospital.com"
+                  placeholder="Admin E-mail Address"
                   className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -215,12 +227,13 @@ export default function RegisterHospitalPage() {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
+                  name="org_admin_password_input"
                   required
                   minLength={6}
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="••••••••"
+                  placeholder="Admin Password"
                   className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
