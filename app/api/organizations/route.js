@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     await connectToDatabase();
-    const organizations = await Organization.find({ subscriptionStatus: { $ne: "canceled" } })
-      .select("name slug plan")
-      .sort({ name: 1 })
+    const organizations = await Organization.find({})
+      .select("_id name slug plan subscriptionStatus")
+      .sort({ createdAt: -1 })
       .lean();
 
     return NextResponse.json({ organizations: organizations || [] });

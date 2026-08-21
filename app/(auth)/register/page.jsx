@@ -54,7 +54,14 @@ export default function RegisterPage() {
   ];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let field = name;
+    if (name === "reg_user_fullname") field = "name";
+    else if (name === "reg_user_email") field = "email";
+    else if (name === "reg_user_password") field = "password";
+    else if (name === "reg_user_phone") field = "phone";
+
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -148,7 +155,11 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+            {/* Hidden dummy trap inputs to stop browser password manager auto-fill */}
+            <input type="text" name="fake_email_trap" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+            <input type="password" name="fake_password_trap" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+
             {/* Hospital Organization Tenant Selector */}
             <div className="space-y-1.5 p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
               <label className="block text-xs font-bold text-navy dark:text-blue-300">
@@ -164,7 +175,7 @@ export default function RegisterPage() {
                 {organizations.length > 0 ? (
                   organizations.map((org) => (
                     <option key={org._id} value={org._id}>
-                      🏥 {org.name} ({org.plan.toUpperCase()} Plan)
+                      🏥 {org.name} ({(org.plan || "starter").toUpperCase()} Plan)
                     </option>
                   ))
                 ) : (
@@ -214,8 +225,9 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="reg_user_fullname"
                   required
+                  autoComplete="off"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="e.g. Dr. Sarah Ahmed"
@@ -229,8 +241,9 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="email"
-                  name="email"
+                  name="reg_user_email"
                   required
+                  autoComplete="new-password"
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="name@example.com"
@@ -244,7 +257,8 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
-                  name="phone"
+                  name="reg_user_phone"
+                  autoComplete="off"
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+92 300 1234567"
@@ -267,9 +281,10 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
+                  name="reg_user_password"
                   required
                   minLength={6}
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
