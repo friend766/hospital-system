@@ -8,6 +8,12 @@ export default function Sidebar({ role, isOpen, onClose }) {
 
   const getNavLinks = (userRole) => {
     switch (userRole) {
+      case "superadmin":
+        return [
+          { label: "Super-Admin Console", href: "/super-admin", icon: "👑" },
+          { label: "Register Hospital Tenant", href: "/register-hospital", icon: "🏢" },
+          { label: "My Profile", href: "/profile", icon: "👤" },
+        ];
       case "admin":
         return [
           { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
@@ -59,7 +65,7 @@ export default function Sidebar({ role, isOpen, onClose }) {
         ];
       default:
         return [
-          { label: "Dashboard", href: "/profile", icon: "📊" },
+          { label: "Dashboard", href: "/", icon: "📊" },
           { label: "My Profile", href: "/profile", icon: "👤" },
         ];
     }
@@ -108,11 +114,11 @@ export default function Sidebar({ role, isOpen, onClose }) {
 
           {/* Navigation Links */}
           <nav className="p-4 space-y-1.5">
-            {links.map((link) => {
+            {links.map((link, idx) => {
               const isActive = pathname === link.href;
               return (
                 <Link
-                  key={link.href}
+                  key={`${link.href}-${idx}`}
                   href={link.href}
                   onClick={onClose}
                   className={`flex items-center space-x-3 px-4 py-2.5 rounded-btn text-sm font-medium transition ${
