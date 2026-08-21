@@ -2,12 +2,13 @@ import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
 import Patient from "@/models/Patient";
 import Doctor from "@/models/Doctor";
+import Organization from "@/models/Organization";
 import { hashPassword } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { name, email, password, role = "patient", phone = "", specialization = "", department = "" } = await req.json();
+    const { name, email, password, role = "patient", organizationId, phone = "", specialization = "", department = "" } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -44,6 +45,13 @@ export async function POST(req) {
       );
     }
 
+    // Resolve Organization ID
+    let targetOrgId = organizationId;
+    if (!targetOrgId) {
+      const defaultOrg = await Organization.findOne({ slug: "central-city-hospital" });
+      if (defaultOrg) targetOrgId = defaultOrg._id;
+    }
+
     const hashedPassword = await hashPassword(password);
 
     const newUser = await User.create({
@@ -51,6 +59,7 @@ export async function POST(req) {
       email: email.toLowerCase(),
       password: hashedPassword,
       role: role || "patient",
+      organizationId: targetOrgId || null,
       phone,
     });
 
@@ -58,10 +67,12 @@ export async function POST(req) {
     if (newUser.role === "patient") {
       await Patient.create({
         userId: newUser._id,
+        organizationId: targetOrgId || null,
       });
     } else if (newUser.role === "doctor") {
       await Doctor.create({
         userId: newUser._id,
+        organizationId: targetOrgId || null,
         specialization: specialization || "General Medicine",
         department: department || "General OPD",
       });
@@ -73,6 +84,7 @@ export async function POST(req) {
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
+      organizationId: targetOrgId,
       phone: newUser.phone,
       createdAt: newUser.createdAt,
     };

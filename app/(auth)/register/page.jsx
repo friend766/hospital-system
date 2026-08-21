@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "@/context/ThemeContext";
@@ -8,18 +8,32 @@ import { useTheme } from "@/context/ThemeContext";
 export default function RegisterPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const [organizations, setOrganizations] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     phone: "",
     role: "patient",
+    organizationId: "",
     specialization: "General Practice",
     department: "Outpatient Department",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/organizations")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.organizations && data.organizations.length > 0) {
+          setOrganizations(data.organizations);
+          setFormData((prev) => ({ ...prev, organizationId: data.organizations[0]._id }));
+        }
+      })
+      .catch((err) => console.error("Error fetching organizations:", err));
+  }, []);
 
   const roles = [
     { id: "patient", label: "Patient", icon: "❤️", desc: "Book appointments & view history" },
@@ -110,7 +124,7 @@ export default function RegisterPage() {
               Create New System Account ✨
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-              Select your role and fill in your registration details
+              Select your hospital workspace and account role
             </p>
           </div>
 
@@ -121,6 +135,29 @@ export default function RegisterPage() {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Hospital Organization Tenant Selector */}
+            <div className="space-y-1.5 p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+              <label className="block text-xs font-bold text-navy dark:text-blue-300">
+                🏢 Select Hospital / Clinic Workspace *
+              </label>
+              <select
+                name="organizationId"
+                value={formData.organizationId}
+                onChange={handleChange}
+                required
+                className="w-full px-3.5 py-2.5 border border-blue-300 dark:border-blue-700 rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {organizations.map((org) => (
+                  <option key={org._id} value={org._id}>
+                    🏥 {org.name} ({org.plan.toUpperCase()} Plan)
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Your account will be securely isolated under your selected hospital workspace.
+              </p>
+            </div>
+
             {/* Interactive Role Selector Cards */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-navy dark:text-slate-200">
