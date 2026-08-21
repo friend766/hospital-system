@@ -34,7 +34,7 @@ export default function RegisterPage() {
             setOrganizations(data.organizations);
             setFormData((prev) => ({
               ...prev,
-              organizationId: prev.organizationId || data.organizations[0]._id,
+              organizationId: prev.organizationId || String(data.organizations[0]._id),
             }));
           }
         }
@@ -174,8 +174,8 @@ export default function RegisterPage() {
               >
                 {organizations.length > 0 ? (
                   organizations.map((org) => (
-                    <option key={org._id} value={org._id}>
-                      🏥 {org.name} ({(org.plan || "starter").toUpperCase()} Plan)
+                    <option key={String(org._id)} value={String(org._id)}>
+                      🏥 {org.name} ({String(org.plan || "starter").toUpperCase()} Plan)
                     </option>
                   ))
                 ) : (

@@ -5,12 +5,20 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     await connectToDatabase();
-    const organizations = await Organization.find({})
+    const rawOrgs = await Organization.find({})
       .select("_id name slug plan subscriptionStatus")
-      .sort({ createdAt: -1 })
+      .sort({ name: 1 })
       .lean();
 
-    return NextResponse.json({ organizations: organizations || [] });
+    const organizations = rawOrgs.map((o) => ({
+      _id: o._id.toString(),
+      name: o.name,
+      slug: o.slug,
+      plan: o.plan || "starter",
+      subscriptionStatus: o.subscriptionStatus || "active",
+    }));
+
+    return NextResponse.json({ organizations });
   } catch (error) {
     return NextResponse.json({ organizations: [], error: error.message }, { status: 500 });
   }
