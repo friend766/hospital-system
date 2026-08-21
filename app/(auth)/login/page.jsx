@@ -14,7 +14,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const key = name === "login_email_address" ? "email" : name === "login_user_password" ? "password" : name;
+    setFormData({ ...formData, [key]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -178,15 +180,19 @@ export default function LoginPage() {
             )}
 
             <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+              {/* Dummy hidden inputs to bypass browser password manager auto-fill */}
+              <input type="text" name="fake_user" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+              <input type="password" name="fake_pass" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+
               <div>
                 <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
                   E-mail Address *
                 </label>
                 <input
                   type="email"
-                  name="email"
+                  name="login_email_address"
                   required
-                  autoComplete="off"
+                  autoComplete="new-password"
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="E-mail"
@@ -209,9 +215,9 @@ export default function LoginPage() {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
+                  name="login_user_password"
                   required
-                  autoComplete="off"
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Password"
