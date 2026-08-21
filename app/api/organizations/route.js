@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     await connectToDatabase();
-    const rawOrgs = await Organization.find({})
+    const rawOrgs = await Organization.find({
+      subscriptionStatus: { $in: ["active", "trialing"] },
+    })
       .select("_id name slug plan subscriptionStatus")
       .sort({ name: 1 })
       .lean();

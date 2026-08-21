@@ -50,7 +50,7 @@ export default function SuperAdminDashboard() {
 
       const json = await res.json();
       if (res.ok) {
-        setSuccessMsg("Hospital Tenant settings updated!");
+        setSuccessMsg(payload.subscriptionStatus === "active" ? "Hospital Tenant approved & activated successfully!" : "Hospital Tenant settings updated!");
         fetchSuperAdminData();
       } else {
         throw new Error(json.error || "Failed to update hospital tenant");
@@ -95,6 +95,10 @@ export default function SuperAdminDashboard() {
     router.push("/login");
   };
 
+  const pendingOrganizations = data?.organizations?.filter(
+    (org) => org.subscriptionStatus === "pending_approval"
+  ) || [];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] transition-colors duration-300">
       {/* Top SaaS Header */}
@@ -136,7 +140,7 @@ export default function SuperAdminDashboard() {
         <div>
           <h1 className="text-2xl font-black text-navy dark:text-white">Super-Admin Master Control Center 🌐</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Manage hospital tenants, upgrade subscription plans, lock/unlock access, and view real-time platform metrics
+            Manage hospital tenants, approve pending tenant registrations, upgrade subscription plans, and view platform metrics
           </p>
         </div>
 
@@ -149,6 +153,38 @@ export default function SuperAdminDashboard() {
         {successMsg && (
           <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-btn">
             ✅ {successMsg}
+          </div>
+        )}
+
+        {/* Pending Approval High Priority Alert Banner */}
+        {pendingOrganizations.length > 0 && (
+          <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold animate-bounce">
+                ⏳
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-amber-900 dark:text-amber-300">
+                  {pendingOrganizations.length} Hospital Tenant Registration(s) Pending Super-Admin Approval!
+                </h2>
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                  Review and approve new hospital tenant applications to grant workspace access.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {pendingOrganizations.map((org) => (
+                <button
+                  key={org._id}
+                  disabled={updatingId === org._id}
+                  onClick={() => handleUpdateTenant(org._id, { subscriptionStatus: "active" })}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-btn shadow-md transition cursor-pointer"
+                >
+                  ✔ Approve '{org.name}'
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -241,7 +277,14 @@ export default function SuperAdminDashboard() {
                     {data?.organizations?.map((org) => (
                       <tr key={org._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                         <td className="py-3.5 px-4 font-bold text-navy dark:text-white">
-                          <div className="text-sm font-extrabold">{org.name}</div>
+                          <div className="text-sm font-extrabold flex items-center gap-2">
+                            <span>{org.name}</span>
+                            {org.subscriptionStatus === "pending_approval" && (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white uppercase tracking-wider">
+                                NEW PENDING
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[10px] text-slate-400 font-normal">slug: {org.slug}</div>
                         </td>
 
@@ -266,7 +309,9 @@ export default function SuperAdminDashboard() {
                             disabled={updatingId === org._id}
                             onClick={() => {
                               const nextStatus =
-                                org.subscriptionStatus === "active"
+                                org.subscriptionStatus === "pending_approval"
+                                  ? "active"
+                                  : org.subscriptionStatus === "active"
                                   ? "past_due"
                                   : org.subscriptionStatus === "past_due"
                                   ? "canceled"
@@ -274,7 +319,9 @@ export default function SuperAdminDashboard() {
                               handleUpdateTenant(org._id, { subscriptionStatus: nextStatus });
                             }}
                             className={`px-3 py-1 rounded-full font-extrabold text-[10px] uppercase border transition ${
-                              org.subscriptionStatus === "active"
+                              org.subscriptionStatus === "pending_approval"
+                                ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-400 dark:border-amber-700 animate-pulse"
+                                : org.subscriptionStatus === "active"
                                 ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-200"
                                 : org.subscriptionStatus === "past_due"
                                 ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 hover:bg-amber-200"
@@ -282,7 +329,9 @@ export default function SuperAdminDashboard() {
                             }`}
                             title="Click to toggle tenant access status"
                           >
-                            {org.subscriptionStatus === "active"
+                            {org.subscriptionStatus === "pending_approval"
+                              ? "⏳ Pending Approval"
+                              : org.subscriptionStatus === "active"
                               ? "✓ Active"
                               : org.subscriptionStatus === "past_due"
                               ? "⚠️ Past Due"
@@ -301,12 +350,22 @@ export default function SuperAdminDashboard() {
 
                         {/* Actions */}
                         <td className="py-3.5 px-4 text-right space-x-2">
-                          <Link
-                            href="/admin/dashboard"
-                            className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 text-primary text-xs font-bold rounded-btn border border-blue-200 dark:border-blue-800 hover:bg-blue-100"
-                          >
-                            Inspect Workspace
-                          </Link>
+                          {org.subscriptionStatus === "pending_approval" ? (
+                            <button
+                              disabled={updatingId === org._id}
+                              onClick={() => handleUpdateTenant(org._id, { subscriptionStatus: "active" })}
+                              className="px-3 py-1 bg-emerald-600 text-white text-xs font-black rounded-btn hover:bg-emerald-700 shadow-sm"
+                            >
+                              ✔ Approve Tenant
+                            </button>
+                          ) : (
+                            <Link
+                              href="/admin/dashboard"
+                              className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 text-primary text-xs font-bold rounded-btn border border-blue-200 dark:border-blue-800 hover:bg-blue-100"
+                            >
+                              Inspect Workspace
+                            </Link>
+                          )}
                           <button
                             disabled={updatingId === org._id}
                             onClick={() => handleDeleteTenant(org._id, org.name)}

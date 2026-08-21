@@ -34,9 +34,23 @@ export async function POST(req) {
     }
 
     let orgName = "";
-    if (user.organizationId) {
+    if (user.organizationId && user.role !== "superadmin") {
       const org = await Organization.findById(user.organizationId);
-      if (org) orgName = org.name;
+      if (org) {
+        orgName = org.name;
+        if (org.subscriptionStatus === "pending_approval") {
+          return NextResponse.json(
+            { error: "⚠️ Your hospital tenant registration is pending approval by the SaaS Super-Admin. Please wait for activation." },
+            { status: 403 }
+          );
+        }
+        if (org.subscriptionStatus === "canceled") {
+          return NextResponse.json(
+            { error: "🔒 Your hospital tenant account has been locked or canceled by the SaaS Super-Admin." },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     const tokenPayload = {

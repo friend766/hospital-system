@@ -18,6 +18,7 @@ export default function RegisterHospitalPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [successInfo, setSuccessInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const plans = [
@@ -46,6 +47,7 @@ export default function RegisterHospitalPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessInfo(null);
     setLoading(true);
 
     try {
@@ -61,8 +63,15 @@ export default function RegisterHospitalPage() {
         throw new Error(data.error || "Hospital registration failed");
       }
 
-      router.push("/admin/dashboard");
-      router.refresh();
+      if (data.pendingApproval) {
+        setSuccessInfo({
+          hospitalName: data.organization?.name || formData.hospitalName,
+          message: data.message,
+        });
+      } else {
+        router.push("/admin/dashboard");
+        router.refresh();
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -109,144 +118,166 @@ export default function RegisterHospitalPage() {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
-            {/* Dummy hidden inputs to block browser password manager auto-fill */}
-            <input type="text" name="fake_user" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
-            <input type="password" name="fake_pass" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
-
-            {/* Interactive Subscription Plan Cards */}
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-navy dark:text-slate-200">
-                Choose Subscription Plan *
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {plans.map((p) => {
-                  const isSelected = formData.plan === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, plan: p.id })}
-                      className={`p-4 rounded-card text-left transition border ${
-                        isSelected
-                          ? "bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-400/40"
-                          : "bg-slate-50 dark:bg-[#0F172A] border-border dark:border-[#334155] text-navy dark:text-slate-200 hover:border-purple-500"
-                      }`}
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-purple-100 text-purple-800"}`}>
-                          {p.badge}
-                        </span>
-                      </div>
-                      <div className="font-black text-sm">{p.title}</div>
-                      <div className="text-lg font-extrabold mt-1">{p.price}</div>
-                      <div className={`text-[11px] mt-1 ${isSelected ? "text-purple-100" : "text-slate-400"}`}>
-                        {p.desc}
-                      </div>
-                    </button>
-                  );
-                })}
+          {successInfo ? (
+            <div className="p-6 bg-amber-500/10 border-2 border-amber-500/50 rounded-2xl space-y-4 text-center">
+              <div className="w-12 h-12 bg-amber-500 text-white rounded-full flex items-center justify-center text-2xl font-black mx-auto shadow-md">
+                ⏳
+              </div>
+              <h2 className="text-lg font-extrabold text-navy dark:text-white">
+                Registration Submitted for '{successInfo.hospitalName}'!
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xl mx-auto leading-relaxed">
+                {successInfo.message}
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/login"
+                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-btn inline-block shadow-md transition"
+                >
+                  Return to Portal Login →
+                </Link>
               </div>
             </div>
+          ) : (
+            <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+              {/* Dummy hidden inputs to block browser password manager auto-fill */}
+              <input type="text" name="fake_user" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+              <input type="password" name="fake_pass" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
 
-            {/* Input Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
-                  Hospital / Clinic Name *
+              {/* Interactive Subscription Plan Cards */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-navy dark:text-slate-200">
+                  Choose Subscription Plan *
                 </label>
-                <input
-                  type="text"
-                  name="hospitalName"
-                  required
-                  value={formData.hospitalName}
-                  onChange={handleChange}
-                  placeholder="e.g. City Care Medical Complex"
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
-                  Tenant Subdomain / Slug *
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  required
-                  value={formData.slug}
-                  onChange={handleChange}
-                  placeholder="e.g. city-care-hospital"
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
-                  Hospital Admin Full Name *
-                </label>
-                <input
-                  type="text"
-                  name="adminName"
-                  required
-                  value={formData.adminName}
-                  onChange={handleChange}
-                  placeholder="e.g. Dr. Mehmood Ashraf"
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
-                  Admin Email Address *
-                </label>
-                <input
-                  type="email"
-                  name="org_admin_email_input"
-                  required
-                  autoComplete="new-password"
-                  value={formData.adminEmail}
-                  onChange={handleChange}
-                  placeholder="Admin E-mail Address"
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-bold text-navy dark:text-slate-200">
-                    Admin Password (min. 6 characters) *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {plans.map((p) => {
+                    const isSelected = formData.plan === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, plan: p.id })}
+                        className={`p-4 rounded-card text-left transition border ${
+                          isSelected
+                            ? "bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-400/40"
+                            : "bg-slate-50 dark:bg-[#0F172A] border-border dark:border-[#334155] text-navy dark:text-slate-200 hover:border-purple-500"
+                        }`}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-purple-100 text-purple-800"}`}>
+                            {p.badge}
+                          </span>
+                        </div>
+                        <div className="font-black text-sm">{p.title}</div>
+                        <div className="text-lg font-extrabold mt-1">{p.price}</div>
+                        <div className={`text-[11px] mt-1 ${isSelected ? "text-purple-100" : "text-slate-400"}`}>
+                          {p.desc}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="org_admin_password_input"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Admin Password"
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-4 rounded-btn text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition shadow-md"
-            >
-              {loading ? "Registering Hospital Workspace..." : "Create Hospital Tenant & Launch Dashboard →"}
-            </button>
-          </form>
+              {/* Input Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                    Hospital / Clinic Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="hospitalName"
+                    required
+                    value={formData.hospitalName}
+                    onChange={handleChange}
+                    placeholder="e.g. City Care Medical Complex"
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                    Tenant Subdomain / Slug *
+                  </label>
+                  <input
+                    type="text"
+                    name="slug"
+                    required
+                    value={formData.slug}
+                    onChange={handleChange}
+                    placeholder="e.g. city-care-hospital"
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                    Hospital Admin Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="adminName"
+                    required
+                    value={formData.adminName}
+                    onChange={handleChange}
+                    placeholder="e.g. Dr. Mehmood Ashraf"
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-navy dark:text-slate-200 mb-1">
+                    Admin Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    name="org_admin_email_input"
+                    required
+                    autoComplete="new-password"
+                    value={formData.adminEmail}
+                    onChange={handleChange}
+                    placeholder="Admin E-mail Address"
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-navy dark:text-slate-200">
+                      Admin Password (min. 6 characters) *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="org_admin_password_input"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Admin Password"
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-[#334155] rounded-btn bg-white dark:bg-[#0F172A] text-navy dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 px-4 rounded-btn text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition shadow-md cursor-pointer"
+              >
+                {loading ? "Submitting Hospital Registration..." : "Submit Registration for Super-Admin Approval →"}
+              </button>
+            </form>
+          )}
 
           <div className="text-center text-xs text-slate-500 dark:text-slate-400 font-medium pt-2">
             Already registered?{" "}

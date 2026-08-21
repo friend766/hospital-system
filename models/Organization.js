@@ -33,8 +33,8 @@ const OrganizationSchema = new mongoose.Schema(
     },
     subscriptionStatus: {
       type: String,
-      enum: ["active", "trialing", "past_due", "canceled"],
-      default: "active",
+      enum: ["pending_approval", "active", "trialing", "past_due", "canceled"],
+      default: "pending_approval",
     },
     maxDoctors: {
       type: Number,
