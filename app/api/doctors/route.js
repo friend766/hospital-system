@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req) {
   try {
+    const session = await getSessionUser(req);
     await connectToDatabase();
 
     const { searchParams } = new URL(req.url);
@@ -13,19 +14,29 @@ export async function GET(req) {
     const department = searchParams.get("department") || "";
 
     let query = {};
+
+    // Multi-Tenant Scoping
+    if (session && session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
+
     if (department) {
       query.department = { $regex: department, $options: "i" };
     }
 
     if (search) {
-      const users = await User.find({
+      const userSearchQuery = {
         role: "doctor",
         $or: [
           { name: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
         ],
-      }).select("_id");
+      };
+      if (session && session.role !== "superadmin" && session.organizationId) {
+        userSearchQuery.organizationId = session.organizationId;
+      }
 
+      const users = await User.find(userSearchQuery).select("_id");
       const userIds = users.map((u) => u._id);
       query.$or = [
         { userId: { $in: userIds } },
@@ -47,7 +58,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getSessionUser(req);
-    if (!session || session.role !== "admin") {
+    if (!session || (session.role !== "admin" && session.role !== "superadmin")) {
       return NextResponse.json(
         { error: "Forbidden. Admin role required to create doctor accounts." },
         { status: 403 }
@@ -86,17 +97,20 @@ export async function POST(req) {
     }
 
     const hashedPassword = await hashPassword(password);
+    const orgId = session.organizationId || null;
 
     const newUser = await User.create({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
       role: "doctor",
+      organizationId: orgId,
       phone,
     });
 
     const newDoctor = await Doctor.create({
       userId: newUser._id,
+      organizationId: orgId,
       specialization,
       department,
       availability,

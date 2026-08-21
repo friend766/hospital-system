@@ -20,6 +20,11 @@ export async function GET(req) {
 
     let query = {};
 
+    // Multi-Tenant Isolation
+    if (session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
+
     if (status) {
       query.status = status;
     }
@@ -101,7 +106,10 @@ export async function POST(req) {
       );
     }
 
+    const orgId = session.organizationId || null;
+
     const newAppointment = await Appointment.create({
+      organizationId: orgId,
       patientId,
       doctorId,
       date,

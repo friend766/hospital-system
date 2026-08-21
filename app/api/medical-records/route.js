@@ -18,6 +18,12 @@ export async function GET(req) {
     const patientId = searchParams.get("patientId");
 
     let query = {};
+
+    // Multi-Tenant Isolation
+    if (session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
+
     if (patientId) {
       query.patientId = patientId;
     }
@@ -59,7 +65,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getSessionUser(req);
-    if (!session || (session.role !== "doctor" && session.role !== "admin")) {
+    if (!session || (session.role !== "doctor" && session.role !== "admin" && session.role !== "superadmin")) {
       return NextResponse.json(
         { error: "Forbidden. Only doctors and admins can create medical records." },
         { status: 403 }
@@ -83,7 +89,10 @@ export async function POST(req) {
       );
     }
 
+    const orgId = session.organizationId || null;
+
     const newRecord = await MedicalRecord.create({
+      organizationId: orgId,
       patientId,
       doctorId,
       appointmentId: appointmentId || null,

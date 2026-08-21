@@ -18,6 +18,12 @@ export async function GET(req) {
     const status = searchParams.get("status") || "";
 
     let query = {};
+
+    // Multi-Tenant Isolation
+    if (session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
+
     if (status) query.status = status;
 
     if (session.role === "patient") {
@@ -52,7 +58,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getSessionUser(req);
-    if (!session || (session.role !== "doctor" && session.role !== "admin")) {
+    if (!session || (session.role !== "doctor" && session.role !== "admin" && session.role !== "superadmin")) {
       return NextResponse.json(
         { error: "Forbidden. Only doctors can issue prescriptions." },
         { status: 403 }
@@ -76,7 +82,10 @@ export async function POST(req) {
       );
     }
 
+    const orgId = session.organizationId || null;
+
     const newPrescription = await Prescription.create({
+      organizationId: orgId,
       patientId,
       doctorId,
       medicalRecordId: medicalRecordId || null,

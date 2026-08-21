@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req) {
   try {
+    const session = await getSessionUser(req);
     await connectToDatabase();
 
     const { searchParams } = new URL(req.url);
@@ -13,6 +14,11 @@ export async function GET(req) {
     const lowStock = searchParams.get("lowStock") === "true";
 
     let query = {};
+
+    // Multi-Tenant Isolation
+    if (session && session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
 
     if (category) {
       query.category = category;
@@ -41,7 +47,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getSessionUser(req);
-    if (!session || (session.role !== "pharmacist" && session.role !== "admin")) {
+    if (!session || (session.role !== "pharmacist" && session.role !== "admin" && session.role !== "superadmin")) {
       return NextResponse.json(
         { error: "Forbidden. Pharmacist or Admin role required." },
         { status: 403 }
@@ -68,8 +74,10 @@ export async function POST(req) {
     }
 
     await connectToDatabase();
+    const orgId = session.organizationId || null;
 
     const newMedicine = await Medicine.create({
+      organizationId: orgId,
       name,
       genericName,
       category,

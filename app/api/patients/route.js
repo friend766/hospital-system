@@ -21,6 +21,11 @@ export async function GET(req) {
 
     let query = {};
 
+    // Multi-Tenant Isolation
+    if (session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
+
     // Doctor scoping: Only patients appointed to this doctor
     if (session.role === "doctor") {
       const doctor = await Doctor.findOne({ userId: session.userId });
@@ -33,16 +38,21 @@ export async function GET(req) {
     }
 
     if (search) {
-      const users = await User.find({
+      const userSearchQuery = {
         role: "patient",
         $or: [
           { name: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
           { phone: { $regex: search, $options: "i" } },
         ],
-      }).select("_id");
+      };
+      if (session.role !== "superadmin" && session.organizationId) {
+        userSearchQuery.organizationId = session.organizationId;
+      }
 
+      const users = await User.find(userSearchQuery).select("_id");
       const userIds = users.map((u) => u._id);
+
       if (query._id) {
         query = {
           $and: [
@@ -50,6 +60,9 @@ export async function GET(req) {
             { userId: { $in: userIds } },
           ],
         };
+        if (session.role !== "superadmin" && session.organizationId) {
+          query.$and.push({ organizationId: session.organizationId });
+        }
       } else {
         query.userId = { $in: userIds };
       }
@@ -72,7 +85,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getSessionUser(req);
-    if (!session || (session.role !== "admin" && session.role !== "receptionist")) {
+    if (!session || (session.role !== "admin" && session.role !== "receptionist" && session.role !== "superadmin")) {
       return NextResponse.json(
         { error: "Forbidden. Admin or Receptionist role required." },
         { status: 403 }
@@ -109,17 +122,20 @@ export async function POST(req) {
     }
 
     const hashedPassword = await hashPassword(password);
+    const orgId = session.organizationId || null;
 
     const newUser = await User.create({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
       role: "patient",
+      organizationId: orgId,
       phone,
     });
 
     const newPatient = await Patient.create({
       userId: newUser._id,
+      organizationId: orgId,
       dateOfBirth,
       gender,
       address,

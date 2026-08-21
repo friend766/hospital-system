@@ -17,6 +17,12 @@ export async function GET(req) {
     const status = searchParams.get("status") || "";
 
     let query = {};
+
+    // Multi-Tenant Scoping
+    if (session.role !== "superadmin" && session.organizationId) {
+      query.organizationId = session.organizationId;
+    }
+
     if (status) query.status = status;
 
     if (session.role === "patient") {
@@ -42,7 +48,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getSessionUser(req);
-    if (!session || (session.role !== "pharmacist" && session.role !== "receptionist" && session.role !== "admin")) {
+    if (!session || (session.role !== "pharmacist" && session.role !== "receptionist" && session.role !== "admin" && session.role !== "superadmin")) {
       return NextResponse.json(
         { error: "Forbidden. Pharmacist, Receptionist, or Admin role required." },
         { status: 403 }
@@ -63,8 +69,10 @@ export async function POST(req) {
 
     const totalAmount = items.reduce((acc, curr) => acc + Number(curr.amount) * Number(curr.quantity || 1), 0);
     const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+    const orgId = session.organizationId || null;
 
     const newInvoice = await Billing.create({
+      organizationId: orgId,
       patientId,
       appointmentId: appointmentId || null,
       prescriptionId: prescriptionId || null,
