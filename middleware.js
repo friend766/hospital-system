@@ -28,6 +28,7 @@ export function middleware(req) {
     pathname === "/register" ||
     pathname === "/register-hospital" ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/organizations") ||
     pathname.startsWith("/api/test-db") ||
     pathname.startsWith("/_next") ||
     pathname.includes("favicon.ico");
